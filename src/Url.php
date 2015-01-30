@@ -349,7 +349,7 @@ class Url implements UrlInterface, ObjectInterface
         if (isset($data['path'])) {
             $url .= preg_replace(['/\/+(?!http:\/\/)/', '/\\\+/'], '/', $data['path']);
         }
-        if (isset($data['query'])) {
+        if (!empty($data['query'])) {
             if (is_string($data['query'])) {
                 $data['query'] = [$data['query']];
             }
