@@ -1,6 +1,15 @@
 URL builder library for PHP
 =================
 
+[![Latest Stable Version](https://poser.pugx.org/romeOz/rock-url/v/stable.svg)](https://packagist.org/packages/romeOz/rock-url)
+[![Total Downloads](https://poser.pugx.org/romeOz/rock-url/downloads.svg)](https://packagist.org/packages/romeOz/rock-url)
+[![Build Status](https://travis-ci.org/romeOz/rock-url.svg?branch=master)](https://travis-ci.org/romeOz/rock-url)
+[![HHVM Status](http://hhvm.h4cc.de/badge/romeoz/rock-url.svg)](http://hhvm.h4cc.de/package/romeoz/rock-url)
+[![Coverage Status](https://coveralls.io/repos/romeOz/rock-url/badge.svg?branch=master)](https://coveralls.io/r/romeOz/rock-url?branch=master)
+[![License](https://poser.pugx.org/romeOz/rock-url/license.svg)](https://packagist.org/packages/romeOz/rock-url)
+
+[Rock Url on Packagist](https://packagist.org/packages/romeOz/rock-url)
+
 Features
 -------------------
 
