@@ -44,9 +44,11 @@ use rock\url\Url;
 (new Url)->getRelativeUrl(); // output: /foo/?page=1
 
 // modify URL
-Url::set('https://site.com/?page=2#name')->removeAnchor()->getRelativeUrl(); //output: /?page=2
+Url::set('https://site.com/?page=2#name')->removeAnchor()->getRelativeUrl(); 
+//output: /?page=2
 
-Url::set('https://site.com/?page=2#name')->removeArgs(['page'])->getAbsoluteUrl(); //output: https://site.com/#name
+Url::set('https://site.com/?page=2#name')->removeArgs(['page'])->getAbsoluteUrl(); 
+//output: https://site.com/#name
 ```
 
 Requirements
