@@ -1,0 +1,41 @@
+{
+    "name": "romeoz/rock-url",
+    "description": "A simple PHP library to parse and builder URLs",
+    "keywords": ["url", "url builder", "parse_url"],
+    "type": "library",
+    "license": "MIT",
+    "support": {
+        "email": "serggalka@gmail.com",
+        "issues": "https://github.com/romeOz/rock-url/issues",
+        "source": "https://github.com/romeOz/rock-url"
+    },
+    "authors": [
+        {
+            "name": "Ruslan",
+            "email": "serggalka@gmail.com"
+        }
+    ],
+    "repositories": [{
+        "type": "vcs",
+        "url": "https://github.com/romeOz/rock-base"
+    }],
+    "require": {
+        "php": ">=5.4.0",
+        "romeoz/rock-base" : "*@dev",
+        "romeoz/rock-helpers" : "*@dev",
+        "romeoz/rock-request" : "*@dev"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "4.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "rock\\url\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+}
