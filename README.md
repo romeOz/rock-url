@@ -36,6 +36,8 @@ use rock\url\Url;
 
 // modify URL
 Url::set('https://site.com/?page=2#name')->removeAnchor()->getRelativeUrl(); //output: /?page=2
+
+Url::set('https://site.com/?page=2#name')->removeArgs(['page'])->getAbsoluteUrl(); //output: https://site.com/#name
 ```
 
 Requirements
