@@ -142,7 +142,7 @@ class Url implements UrlInterface, ObjectInterface
     }
 
     /**
-     * Removing all URL-arguments
+     * Removing all URL-arguments.
      * @return $this
      */
     public function removeAllArgs()
@@ -267,7 +267,7 @@ class Url implements UrlInterface, ObjectInterface
     }
 
     /**
-     * Returnst absolute URL: `/`
+     * Returns absolute URL: `/`
      * @param bool $selfHost
      * @return null|string
      */
