@@ -8,7 +8,7 @@ URL builder library for PHP
 [![Coverage Status](https://coveralls.io/repos/romeOz/rock-url/badge.svg?branch=master)](https://coveralls.io/r/romeOz/rock-url?branch=master)
 [![License](https://poser.pugx.org/romeOz/rock-url/license.svg)](https://packagist.org/packages/romeOz/rock-url)
 
-[Rock Url on Packagist](https://packagist.org/packages/romeOz/rock-url)
+[Rock URL on Packagist](https://packagist.org/packages/romeOz/rock-url)
 
 Features
 -------------------
