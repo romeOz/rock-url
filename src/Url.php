@@ -7,11 +7,12 @@ use rock\base\ObjectInterface;
 use rock\base\ObjectTrait;
 use rock\di\Container;
 use rock\helpers\Helper;
+use rock\helpers\Instance;
 use rock\helpers\StringHelper;
 use rock\request\Request;
 
 /**
- * Class Url
+ * Url
  *
  * @property string $scheme
  * @property string $host
@@ -65,10 +66,7 @@ class Url implements UrlInterface, ObjectInterface
     public function __construct($url = null, $config = [])
     {
         $this->parentConstruct($config);
-
-        if (!is_object($this->request)) {
-            $this->request = $this->getRequest($this->request);
-        }
+        $this->request = Instance::ensure($this->request, '\rock\request\Request');
 
         $url = $this->defaultUrlInternal($url);
         $this->dataUrl = parse_url(trim($url));
@@ -362,20 +360,6 @@ class Url implements UrlInterface, ObjectInterface
         $url .= StringHelper::lconcat($data['fragment'], '#');
 
         return $url;
-    }
-
-    /**
-     * Returns {@see \rock\request\Request} instance.
-     * @return Request
-     * @throws UrlException
-     * @throws \rock\di\ContainerException
-     */
-    protected function getRequest($config)
-    {
-        if (class_exists('\rock\di\Container')) {
-            return Container::load($config);
-        }
-        return new Request();
     }
 
     private function _queryToArray($query)
