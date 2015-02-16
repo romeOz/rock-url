@@ -175,6 +175,13 @@ class UrlTest extends \PHPUnit_Framework_TestCase
                 ->getAbsoluteUrl(true)
         );
 
+        $url = new Url('http://site2.com/?page=2#name');
+        $url->query = 'views=all&page=3';
+        $this->assertSame(
+            'http://site.com/?views=all&page=3#name',
+            $url->getAbsoluteUrl(true)
+        );
+
         // build + remove args
         $url = new Url('http://site2.com/?page=2#name');
         $this->assertSame(

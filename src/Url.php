@@ -73,7 +73,7 @@ class Url implements UrlInterface, ObjectInterface
         $url = $this->defaultUrlInternal($url);
         $this->dataUrl = parse_url(trim($url));
         if (isset($this->dataUrl['query'])) {
-            parse_str($this->dataUrl['query'], $this->dataUrl['query']);
+            $this->dataUrl['query'] = $this->_queryToArray($this->dataUrl['query']);
         }
     }
 
@@ -308,6 +308,9 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function __set($name, $value)
     {
+        if ($name === 'query') {
+            $value = $this->_queryToArray($value);
+        }
         $this->dataUrl[$name] = $value;
     }
 
@@ -373,5 +376,14 @@ class Url implements UrlInterface, ObjectInterface
             return Container::load($config);
         }
         return new Request();
+    }
+
+    private function _queryToArray($query)
+    {
+        if (!isset($query) || is_array($query)) {
+            return $query;
+        }
+        parse_str($query, $query);
+        return $query;
     }
 }
