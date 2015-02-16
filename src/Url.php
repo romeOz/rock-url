@@ -69,7 +69,7 @@ class Url implements UrlInterface, ObjectInterface
         $this->request = Instance::ensure($this->request, '\rock\request\Request');
 
         $url = $this->defaultUrlInternal($url);
-        $this->dataUrl = parse_url(trim($url));
+        $this->dataUrl = array_merge(parse_url(trim($url)), $this->dataUrl);
         if (isset($this->dataUrl['query'])) {
             $this->dataUrl['query'] = $this->_queryToArray($this->dataUrl['query']);
         }
