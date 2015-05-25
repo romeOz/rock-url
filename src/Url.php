@@ -228,26 +228,27 @@ class Url implements UrlInterface, ObjectInterface
     /**
      * Returns formatted URL.
      *
-     * @param int  $const
+     * @param string  $const
      * @param bool $selfHost to use current host (security).
      * @return null|string
      */
-    public function get($const = 0, $selfHost = false)
+    public function get($const = self::REL, $selfHost = false)
     {
         if ($selfHost == true) {
             $this->dataUrl['scheme'] = $this->request->getScheme();
             $this->dataUrl['host'] = $this->request->getHost();
         }
 
-        if ($const & self::HTTP && isset($this->dataUrl['host'])) {
+        if (!isset($this->dataUrl['host'])) {
+            $this->dataUrl['scheme'] = $this->request->getScheme();
+            $this->dataUrl['host'] = $this->request->getHost();
+        }
+
+        if ($const == self::HTTP && isset($this->dataUrl['host'])) {
             $this->dataUrl['scheme'] = 'http';
-        } elseif ($const & self::HTTPS && isset($this->dataUrl['host'])) {
+        } elseif ($const == self::HTTPS && isset($this->dataUrl['host'])) {
             $this->dataUrl['scheme'] = 'https';
-        } elseif($const & self::ABS) {
-            if (!isset($this->dataUrl['host'])) {
-                $this->dataUrl['scheme'] = $this->request->getScheme();
-                $this->dataUrl['host'] = $this->request->getHost();
-            }
+        } elseif($const == self::ABS) {
         } else {
             unset($this->dataUrl['scheme'] , $this->dataUrl['host'], $this->dataUrl['user'], $this->dataUrl['pass']);
         }
@@ -271,7 +272,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function getRelativeUrl($selfHost = false)
     {
-        return $this->get(0, $selfHost);
+        return $this->get(self::REL, $selfHost);
     }
 
     /**
