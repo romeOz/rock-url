@@ -234,25 +234,26 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function get($const = self::REL, $selfHost = false)
     {
+        $data = $this->dataUrl;
         if ($selfHost == true) {
-            $this->dataUrl['scheme'] = $this->request->getScheme();
-            $this->dataUrl['host'] = $this->request->getHost();
+            $data['scheme'] = $this->request->getScheme();
+            $data['host'] = $this->request->getHost();
         }
 
-        if (!isset($this->dataUrl['host'])) {
-            $this->dataUrl['scheme'] = $this->request->getScheme();
-            $this->dataUrl['host'] = $this->request->getHost();
+        if (!isset($data['host'])) {
+            $data['scheme'] = $this->request->getScheme();
+            $data['host'] = $this->request->getHost();
         }
 
-        if ($const == self::HTTP && isset($this->dataUrl['host'])) {
-            $this->dataUrl['scheme'] = 'http';
-        } elseif ($const == self::HTTPS && isset($this->dataUrl['host'])) {
-            $this->dataUrl['scheme'] = 'https';
+        if ($const == self::HTTP && isset($data['host'])) {
+            $data['scheme'] = 'http';
+        } elseif ($const == self::HTTPS && isset($data['host'])) {
+            $data['scheme'] = 'https';
         } elseif($const == self::ABS) {
         } else {
-            unset($this->dataUrl['scheme'] , $this->dataUrl['host'], $this->dataUrl['user'], $this->dataUrl['pass']);
+            unset($data['scheme'] , $data['host'], $data['user'], $data['pass'], $data['port']);
         }
-        return $this->strip === true ? strip_tags($this->build($this->dataUrl)) : $this->build($this->dataUrl);
+        return $this->strip === true ? strip_tags($this->build($data)) : $this->build($data);
     }
 
     /**
@@ -347,7 +348,20 @@ class Url implements UrlInterface, ObjectInterface
             $url .= StringHelper::rconcat($data['user'], ':');
             $url .= StringHelper::rconcat($data['pass'], '@');
         }
-        $url .= Helper::getValue($data['host']);
+        if (!empty($data['host'])) {
+            $data['host'] = explode(':', $data['host']);
+            if (!isset($data['host'][1])) {
+                $data['host'][1] = null;
+            }
+            list($host, $port) = $data['host'];
+            $url .= $host;
+            if (isset($port)) {
+                $data['port'] = $port;
+            }
+        }
+        if (!empty($data['port'])) {
+            $url .= ":{$data['port']}";
+        }
         if (isset($data['path'])) {
             $url .= preg_replace(['/\/+(?!http:\/\/)/', '/\\\+/'], '/', $data['path']);
         }

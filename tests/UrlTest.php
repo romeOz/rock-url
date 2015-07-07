@@ -43,6 +43,12 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $url = new Url();
         $this->assertSame('http://site.com/', $url->getAbsoluteUrl());
 
+        //port
+        $_SERVER['HTTP_HOST'] = 'site.com:8080';
+        $url = new Url();
+        $this->assertSame('http://site.com:8080/', $url->getAbsoluteUrl());
+        $_SERVER['HTTP_HOST'] = null;
+
         // removing args
         $url = new Url();
         $this->assertSame('http://site.com/', $url->removeArgs(['page'])->getAbsoluteUrl());
@@ -144,7 +150,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     public function testModifyUrl()
     {
         // relative
-        $url = new Url('http://site.com/?page=2#name');
+        $url = new Url('http://site.com:8080/?page=2#name');
         $this->assertSame('/?page=2#name',$url->getRelativeUrl());
 
         // https
@@ -156,8 +162,8 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('http://site.com/?page=2#name', $url->getHttpUrl());
 
         // removing anchor
-        $url = new Url('https://site.com/?page=2#name');
-        $this->assertSame('https://site.com/?page=2', $url->removeAnchor()->getAbsoluteUrl());
+        $url = new Url('https://site.com:8080/?page=2#name');
+        $this->assertSame('https://site.com:8080/?page=2', $url->removeAnchor()->getAbsoluteUrl());
 
         // replacing URL
         $url =  new Url('http://site.com/news/?page=2#name');
@@ -175,12 +181,14 @@ class UrlTest extends \PHPUnit_Framework_TestCase
                 ->getAbsoluteUrl(true)
         );
 
+        $_SERVER['HTTP_HOST'] = 'site.com:8080';
         $url = new Url('http://site2.com/?page=2#name');
         $url->query = 'views=all&page=3';
         $this->assertSame(
-            'http://site.com/?views=all&page=3#name',
+            'http://site.com:8080/?views=all&page=3#name',
             $url->getAbsoluteUrl(true)
         );
+        $_SERVER['HTTP_HOST'] = null;
 
         // build + remove args
         $url = new Url('http://site2.com/?page=2#name');
