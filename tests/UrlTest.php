@@ -202,14 +202,14 @@ class UrlTest extends \PHPUnit_Framework_TestCase
                 ->getAbsoluteUrl()
         );
 
-        $this->assertSame(
-            'http://site2.com/parts/news/?view=all#name',
-            Url::set('http://site2.com/?page=2#name')
-                ->addBeginPath('/parts')
-                ->addEndPath('/news/')
-                ->addArgs(['view'=> 'all'])
-                ->removeArgs(['page'])
-                ->getAbsoluteUrl()
-        );
+        $url = Url::set('http://site2.com/?page=2#name')
+            ->addBeginPath('/parts')
+            ->addEndPath('/news/')
+            ->addArgs(['view'=> 'all'])
+            ->removeArgs(['page']);
+        $this->assertSame('http://site2.com/parts/news/?view=all#name', $url->getAbsoluteUrl());
+
+        // to string
+        $this->assertSame('http://site2.com/parts/news/?view=all#name', (string)$url);
     }
 }

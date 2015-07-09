@@ -332,6 +332,14 @@ class Url implements UrlInterface, ObjectInterface
     }
 
     /**
+     * @inheritdoc
+     */
+    public function __toString()
+    {
+        return $this->getAbsoluteUrl();
+    }
+
+    /**
      * Returns current url.
      * @return string
      * @throws \Exception
