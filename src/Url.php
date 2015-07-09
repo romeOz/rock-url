@@ -260,7 +260,7 @@ class Url implements UrlInterface, ObjectInterface
      * @param bool $selfHost
      * @return null|string
      */
-    public function getAbsoluteUrl($selfHost = false)
+    public function getAbsolute($selfHost = false)
     {
         return $this->get(self::ABS, $selfHost);
     }
@@ -270,7 +270,7 @@ class Url implements UrlInterface, ObjectInterface
      * @param bool $selfHost
      * @return null|string
      */
-    public function getRelativeUrl($selfHost = false)
+    public function getRelative($selfHost = false)
     {
         return $this->get(self::REL, $selfHost);
     }
@@ -280,7 +280,7 @@ class Url implements UrlInterface, ObjectInterface
      * @param bool $selfHost
      * @return null|string
      */
-    public function getHttpUrl($selfHost = false)
+    public function getHttp($selfHost = false)
     {
         return $this->get(self::HTTP, $selfHost);
     }
@@ -290,7 +290,7 @@ class Url implements UrlInterface, ObjectInterface
      * @param bool $selfHost
      * @return null|string
      */
-    public function getHttpsUrl($selfHost = false)
+    public function getHttps($selfHost = false)
     {
         return $this->get(self::HTTPS, $selfHost);
     }
@@ -336,7 +336,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function __toString()
     {
-        return $this->getAbsoluteUrl();
+        return $this->getAbsolute();
     }
 
     /**
