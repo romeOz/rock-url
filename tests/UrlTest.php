@@ -80,11 +80,13 @@ class UrlTest extends \PHPUnit_Framework_TestCase
 
         // callback
         $url = new Url();
-        $this->assertSame('http://site.com/#foo', $url->callback(function(Url $url){$url->fragment = 'foo';})->getAbsolute());
+        $this->assertSame('http://site.com/#foo', $url->callback(function (Url $url) {
+            $url->fragment = 'foo';
+        })->getAbsolute());
 
         // get host
         $url = new Url();
-        $this->assertSame('site.com',$url->host);
+        $this->assertSame('site.com', $url->host);
 
         // get host
         $url = new Url();
@@ -113,7 +115,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
                 ->addAnchor('name')
                 ->removeAllArgs()
                 ->setArgs(['page' => 1])
-                ->addArgs(['view'=> 'all'])
+                ->addArgs(['view' => 'all'])
                 ->getRelative()
         );
 
@@ -139,7 +141,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
                 ->addEndPath('/news/')
                 ->addAnchor('name')
                 ->removeAllArgs()
-                ->addArgs(['view'=> 'all'])
+                ->addArgs(['view' => 'all'])
                 ->getRelative()
         );
 
@@ -154,7 +156,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     {
         // relative
         $url = new Url('http://site.com:8080/?page=2#name');
-        $this->assertSame('/?page=2#name',$url->getRelative());
+        $this->assertSame('/?page=2#name', $url->getRelative());
 
         // https
         $url = Url::set('http://site.com/?page=2#name');
@@ -169,7 +171,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('https://site.com:8080/?page=2', $url->removeAnchor()->getAbsolute());
 
         // replacing URL
-        $url =  new Url('http://site.com/news/?page=2#name');
+        $url = new Url('http://site.com/news/?page=2#name');
         $this->assertSame('http://site.com/?page=2#name', $url->replacePath('news/', '')->getAbsolute());
 
         // build + add args + self host
@@ -180,7 +182,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
                 ->addBeginPath('/parts')
                 ->addEndPath('/news/')
                 ->addAnchor('name')
-                ->addArgs(['view'=> 'all'])
+                ->addArgs(['view' => 'all'])
                 ->getAbsolute(true)
         );
 
@@ -200,7 +202,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             $url
                 ->addBeginPath('/parts')
                 ->addEndPath('/news/')
-                ->addArgs(['view'=> 'all'])
+                ->addArgs(['view' => 'all'])
                 ->removeArgs(['page'])
                 ->getAbsolute()
         );
@@ -208,11 +210,32 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $url = Url::set('http://site2.com/?page=2#name')
             ->addBeginPath('/parts')
             ->addEndPath('/news/')
-            ->addArgs(['view'=> 'all'])
+            ->addArgs(['view' => 'all'])
             ->removeArgs(['page']);
         $this->assertSame('http://site2.com/parts/news/?view=all#name', $url->getAbsolute());
 
         // to string
         $this->assertSame('http://site2.com/parts/news/?view=all#name', (string)$url);
+    }
+
+    public function testToArray()
+    {
+        $url = Url::set('http://site2.com/?page=2#name')
+            ->addBeginPath('/parts')
+            ->addEndPath('/news/')
+            ->addArgs(['view' => 'all'])
+            ->removeArgs(['page']);
+
+        $expected = [
+            'scheme' => 'http',
+            'host' => 'site2.com',
+            'path' => '/parts//news/',
+            'query' =>
+                [
+                    'view' => 'all',
+                ],
+            'fragment' => 'name',
+        ];
+        $this->assertEquals($expected, $url->toArray());
     }
 }

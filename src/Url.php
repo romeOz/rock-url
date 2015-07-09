@@ -332,6 +332,15 @@ class Url implements UrlInterface, ObjectInterface
     }
 
     /**
+     * Returns data of url.
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->data;
+    }
+
+    /**
      * @inheritdoc
      */
     public function __toString()
