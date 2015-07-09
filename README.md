@@ -41,14 +41,27 @@ use rock\url\Url;
 // example URL: http://site.com/foo/?page=1
 
 // returns relative URL
-(new Url)->getRelativeUrl(); // output: /foo/?page=1
+(new Url)->getRelative(); // output: /foo/?page=1
 
 // modify URL
-Url::set('https://site.com/?page=2#name')->removeAnchor()->getRelativeUrl(); 
+Url::set('https://site.com/?page=2#name')->removeAnchor()->getRelative(); 
 //output: /?page=2
 
-Url::set('https://site.com/?page=2#name')->removeArgs(['page'])->getAbsoluteUrl(); 
+Url::set('https://site.com/?page=2#name')->removeArgs(['page'])->getAbsolute(); 
 //output: https://site.com/#name
+```
+
+###Short methods
+
+```php
+Url::modify(['https://site.com/', 'foo' => 'test', '#' => 'name']);
+//output: https://site.com/?foo=test#name
+
+Url::modify(['https://site.com/?foo=test#name', '!foo', '!#']);
+//output: https://site.com/
+
+Url::current([foo' => 'test]);
+//output: https://site.com/?foo=test
 ```
 
 Requirements
