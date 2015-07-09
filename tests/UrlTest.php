@@ -212,4 +212,11 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         // to string
         $this->assertSame('http://site2.com/parts/news/?view=all#name', (string)$url);
     }
+
+    public function testCurrentUrl()
+    {
+        $url = new Url(null, ['current' => 'http://test.com/']);
+        $this->assertSame('http://test.com/', $url->getAbsoluteUrl());
+
+    }
 }
