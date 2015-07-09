@@ -29,15 +29,12 @@ class Url implements UrlInterface, ObjectInterface
         ObjectTrait::__construct as parentConstruct;
     }
 
-    const DEFAULT_ABSOLUTE = 0;
-    const DEFAULT_REFERRER = 1;
-
     /**
      * Array URL-data.
      *
      * @var array
      */
-    protected $dataUrl = [];
+    protected $data = [];
     /**
      * Dummy by URL. If URL is empty.
      *
@@ -50,10 +47,10 @@ class Url implements UrlInterface, ObjectInterface
      */
     public $strip = true;
     /**
-     * Default URL.
-     * @var int
+     * Current URL.
+     * @var string
      */
-    public $defaultUrl = self::DEFAULT_ABSOLUTE;
+    public $current;
     /** @var  Request */
     public $request = 'request';
 
@@ -68,10 +65,12 @@ class Url implements UrlInterface, ObjectInterface
         $this->parentConstruct($config);
         $this->request = Instance::ensure($this->request, '\rock\request\Request');
 
-        $url = $this->defaultUrlInternal($url);
-        $this->dataUrl = array_merge(parse_url(trim($url)), $this->dataUrl);
-        if (isset($this->dataUrl['query'])) {
-            $this->dataUrl['query'] = $this->_queryToArray($this->dataUrl['query']);
+        if (!isset($url)) {
+            $url = $this->current();
+        }
+        $this->data = array_merge(parse_url(trim($url)), $this->data);
+        if (isset($this->data['query'])) {
+            $this->data['query'] = $this->_queryToArray($this->data['query']);
         }
     }
 
@@ -101,7 +100,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function setArgs(array $args)
     {
-        $this->dataUrl['query'] = $args;
+        $this->data['query'] = $args;
 
         return $this;
     }
@@ -114,8 +113,8 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function addArgs(array $args)
     {
-        $this->dataUrl['query'] = array_merge(Helper::getValue($this->dataUrl['query'], []), $args);
-        $this->dataUrl['query'] = array_filter($this->dataUrl['query']);
+        $this->data['query'] = array_merge(Helper::getValue($this->data['query'], []), $args);
+        $this->data['query'] = array_filter($this->data['query']);
         return $this;
     }
 
@@ -127,12 +126,12 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function removeArgs(array $args)
     {
-        if (empty($this->dataUrl['query'])) {
+        if (empty($this->data['query'])) {
             return $this;
         }
 
-        $this->dataUrl['query'] = array_diff_key(
-            $this->dataUrl['query'],
+        $this->data['query'] = array_diff_key(
+            $this->data['query'],
             array_flip($args)
         );
 
@@ -145,7 +144,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function removeAllArgs()
     {
-        $this->dataUrl['query'] = null;
+        $this->data['query'] = null;
         return $this;
     }
 
@@ -157,7 +156,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function addAnchor($anchor)
     {
-        $this->dataUrl['fragment'] = $anchor;
+        $this->data['fragment'] = $anchor;
 
         return $this;
     }
@@ -169,7 +168,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function removeAnchor()
     {
-        $this->dataUrl['fragment'] = null;
+        $this->data['fragment'] = null;
 
         return $this;
     }
@@ -182,7 +181,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function addBeginPath($value)
     {
-        $this->dataUrl['path'] = $value . $this->dataUrl['path'];
+        $this->data['path'] = $value . $this->data['path'];
 
         return $this;
     }
@@ -195,7 +194,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function addEndPath($value)
     {
-        $this->dataUrl['path'] .= $value;
+        $this->data['path'] .= $value;
 
         return $this;
     }
@@ -209,7 +208,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function replacePath($search, $replace)
     {
-        $this->dataUrl['path'] = str_replace($search, $replace, $this->dataUrl['path']);
+        $this->data['path'] = str_replace($search, $replace, $this->data['path']);
         return $this;
     }
 
@@ -219,7 +218,7 @@ class Url implements UrlInterface, ObjectInterface
      * @param callable $callback
      * @return $this
      */
-    public function callback(\Closure $callback)
+    public function callback(callable $callback)
     {
         call_user_func($callback, $this);
         return $this;
@@ -234,7 +233,7 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function get($const = self::REL, $selfHost = false)
     {
-        $data = $this->dataUrl;
+        $data = $this->data;
         if ($selfHost == true) {
             $data['scheme'] = $this->request->getScheme();
             $data['host'] = $this->request->getHost();
@@ -311,7 +310,7 @@ class Url implements UrlInterface, ObjectInterface
         if ($name === 'query') {
             $value = $this->_queryToArray($value);
         }
-        $this->dataUrl[$name] = $value;
+        $this->data[$name] = $value;
     }
 
     /**
@@ -325,19 +324,21 @@ class Url implements UrlInterface, ObjectInterface
      */
     public function __get($name)
     {
-        if (isset($this->dataUrl[$name])) {
-            return $this->dataUrl[$name];
+        if (isset($this->data[$name])) {
+            return $this->data[$name];
         }
 
         return null;
     }
 
-    protected function defaultUrlInternal($url)
+    /**
+     * Returns current url.
+     * @return string
+     * @throws \Exception
+     */
+    protected function current()
     {
-        if (!isset($url)) {
-            return $this->defaultUrl === self::DEFAULT_ABSOLUTE ? $this->request->getAbsoluteUrl() : $this->request->getReferrer();
-        }
-        return Alias::getAlias($url);
+        return $this->current ? Alias::getAlias($this->current) : $this->request->getAbsoluteUrl();
     }
 
     protected function build(array $data)
