@@ -91,34 +91,22 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
      * @return null|string
      * @throws UrlException
      */
-    public static function modify($modify, $scheme = self::REL, array $config = [])
+    public static function modify($modify = null, $scheme = self::REL, array $config = [])
     {
-        if (is_scalar($modify)) {
+        if (!isset($modify) || is_scalar($modify)) {
             return static::set($modify, $config)->get($scheme);
         }
 
         if (!is_array($modify)) {
             throw new UrlException('$modify must be array.');
         }
-        $url = array_shift($modify);
-        return static::modifyInternal(static::set($url, $config), $modify)->get($scheme);
-    }
-
-    /**
-     * Modify current url.
-     * @param array $modify
-     * @param string $scheme
-     * @param array $config
-     * @return null|string
-     * @throws UrlException
-     */
-    public static function current(array $modify = null, $scheme = self::REL, array $config = [])
-    {
-        if (!isset($modify)) {
-            return static::set(null, $config)->get($scheme);
+        if (is_int(key($modify)) && current($modify)[0] !== '!') {
+            $url = array_shift($modify);
+        } else {
+            $url = null;
         }
 
-        return static::modifyInternal(static::set(null, $config), $modify)->get($scheme);
+        return static::modifyInternal(static::set($url, $config), $modify)->get($scheme);
     }
 
     /**

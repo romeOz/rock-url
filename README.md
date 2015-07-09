@@ -51,7 +51,7 @@ Url::set('https://site.com/?page=2#name')->removeArgs(['page'])->getAbsolute();
 //output: https://site.com/#name
 ```
 
-###Short methods
+###Short method `modify()`
 
 ```php
 Url::modify(['https://site.com/', 'foo' => 'test', '#' => 'name']);
@@ -60,7 +60,8 @@ Url::modify(['https://site.com/', 'foo' => 'test', '#' => 'name']);
 Url::modify(['https://site.com/?foo=test#name', '!foo', '!#']);
 //output: https://site.com/
 
-Url::current([foo' => 'test]);
+// modify current url
+Url::modify([foo' => 'test]);
 //output: https://site.com/?foo=test
 ```
 

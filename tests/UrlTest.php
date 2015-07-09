@@ -254,12 +254,13 @@ class UrlTest extends \PHPUnit_Framework_TestCase
 
     public function testCurrentModify()
     {
-        $this->assertEquals('http://site.com/', Url::current(null, Url::ABS));
-        $this->assertEquals('/', Url::current());
+        $this->assertEquals('http://site.com/', Url::modify(null, Url::ABS));
+        $this->assertEquals('/', Url::modify());
 
-        $this->assertEquals('/?page=2', Url::current(['page' => 2]));
-        $this->assertEquals('/?page=2#name', Url::current(['page' => 2, '#' => 'name']));
+        $this->assertEquals('/?page=2', Url::modify(['page' => 2]));
+        $this->assertEquals('http://site.com/?page=2', Url::modify(['page' => 2], Url::ABS));
+        $this->assertEquals('/?page=2#name', Url::modify(['page' => 2, '#' => 'name']));
 
-        $this->assertEquals('/', Url::current(['#' => '']));
+        $this->assertEquals('/', Url::modify(['#' => '']));
     }
 }
