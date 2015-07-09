@@ -227,11 +227,11 @@ class Url implements UrlInterface, ObjectInterface
     /**
      * Returns formatted URL.
      *
-     * @param string  $const
+     * @param string  $scheme
      * @param bool $selfHost to use current host (security).
      * @return null|string
      */
-    public function get($const = self::REL, $selfHost = false)
+    public function get($scheme = self::REL, $selfHost = false)
     {
         $data = $this->data;
         if ($selfHost == true) {
@@ -244,11 +244,11 @@ class Url implements UrlInterface, ObjectInterface
             $data['host'] = $this->request->getHost();
         }
 
-        if ($const == self::HTTP && isset($data['host'])) {
+        if ($scheme == self::HTTP && isset($data['host'])) {
             $data['scheme'] = 'http';
-        } elseif ($const == self::HTTPS && isset($data['host'])) {
+        } elseif ($scheme == self::HTTPS && isset($data['host'])) {
             $data['scheme'] = 'https';
-        } elseif($const == self::ABS) {
+        } elseif($scheme == self::ABS) {
         } else {
             unset($data['scheme'] , $data['host'], $data['user'], $data['pass'], $data['port']);
         }
