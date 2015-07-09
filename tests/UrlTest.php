@@ -259,5 +259,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('/?page=2', Url::current(['page' => 2]));
         $this->assertEquals('/?page=2#name', Url::current(['page' => 2, '#' => 'name']));
+
+        $this->assertEquals('/', Url::current(['#' => '']));
     }
 }
