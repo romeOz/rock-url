@@ -81,17 +81,17 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         // callback
         $url = new Url();
         $this->assertSame('http://site.com/#foo', $url->callback(function (Url $url) {
-            $url->fragment = 'foo';
+            $url['fragment'] = 'foo';
         })->getAbsolute());
 
         // get host
         $url = new Url();
-        $this->assertSame('site.com', $url->host);
+        $this->assertSame('site.com', $url['host']);
 
         // get host
         $url = new Url();
-        $url->user = 'tom';
-        $url->pass = '123';
+        $url['user'] = 'tom';
+        $url['pass'] = '123';
         $this->assertSame('http://tom:123@site.com/', $url->getAbsolute());
 
         // build
@@ -188,7 +188,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
 
         $_SERVER['HTTP_HOST'] = 'site.com:8080';
         $url = new Url('http://site2.com/?page=2#name');
-        $url->query = 'views=all&page=3';
+        $url['query'] = 'views=all&page=3';
         $this->assertSame(
             'http://site.com:8080/?views=all&page=3#name',
             $url->getAbsolute(true)
@@ -237,5 +237,27 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             'fragment' => 'name',
         ];
         $this->assertEquals($expected, $url->toArray());
+    }
+
+    public function testModify()
+    {
+        $this->assertEquals('/', Url::modify('http://site.com/'));
+        $this->assertEquals('http://site.com/', Url::modify('http://site.com/', Url::ABS));
+        $this->assertEquals('http://site.com/?page=2', Url::modify(['http://site.com/', 'page' => 2], Url::ABS));
+        $this->assertEquals('/?page=2', Url::modify(['http://site.com/', 'page' => 2]));
+
+        $this->assertEquals('/', Url::modify(['http://site.com/?foo=bar', '!foo']));
+        $this->assertEquals('/?page=2#name', Url::modify(['http://site.com/?foo=bar', '!foo', 'page' => 2, '#' => 'name']));
+        $this->assertEquals('/?page=2', Url::modify(['http://site.com/?foo=bar#name', '!foo', 'page' => 2, '!#']));
+        $this->assertEquals('/', Url::modify(['http://site.com/?foo=bar&baz=bar', '!']));
+    }
+
+    public function testCurrentModify()
+    {
+        $this->assertEquals('http://site.com/', Url::current(null, Url::ABS));
+        $this->assertEquals('/', Url::current());
+
+        $this->assertEquals('/?page=2', Url::current(['page' => 2]));
+        $this->assertEquals('/?page=2#name', Url::current(['page' => 2, '#' => 'name']));
     }
 }

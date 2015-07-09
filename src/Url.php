@@ -12,25 +12,16 @@ use rock\helpers\StringHelper;
 use rock\request\Request;
 
 /**
- * Url
- *
- * @property string $scheme
- * @property string $host
- * @property int $port
- * @property string $user
- * @property string $pass
- * @property string $path
- * @property string|null $query
- * @property string|null $fragment
+ * Url manager.
  */
-class Url implements UrlInterface, ObjectInterface
+class Url implements UrlInterface, ObjectInterface, \ArrayAccess
 {
     use ObjectTrait {
         ObjectTrait::__construct as parentConstruct;
     }
 
     /**
-     * Array URL-data.
+     * List URL-data.
      *
      * @var array
      */
@@ -57,7 +48,7 @@ class Url implements UrlInterface, ObjectInterface
     /**
      * Modify URL.
      *
-     * @param string|null  $url URL for formatting. If URL as `NULL`, then use current (self) URL.
+     * @param string|null $url URL for formatting. If URL as `NULL`, then use current (self) URL.
      * @param array $config
      */
     public function __construct($url = null, $config = [])
@@ -66,7 +57,7 @@ class Url implements UrlInterface, ObjectInterface
         $this->request = Instance::ensure($this->request, '\rock\request\Request');
 
         if (!isset($url)) {
-            $url = $this->current();
+            $url = $this->currentInternal();
         }
         $this->data = array_merge(parse_url(trim($url)), $this->data);
         if (isset($this->data['query'])) {
@@ -78,7 +69,7 @@ class Url implements UrlInterface, ObjectInterface
      * Modify URL.
      *
      * @param string|null $url URL for modify (default: NULL)
-     * @param array       $config the configuration. It can be either a string representing the class name
+     * @param array $config the configuration. It can be either a string representing the class name
      *                             or an array representing the object configuration.
      * @throws \rock\di\ContainerException
      * @return $this
@@ -90,6 +81,44 @@ class Url implements UrlInterface, ObjectInterface
             return Container::load($url, $config);
         }
         return new static($url, $config);
+    }
+
+    /**
+     * Modify url.
+     * @param string|array $modify
+     * @param string $scheme
+     * @param array $config
+     * @return null|string
+     * @throws UrlException
+     */
+    public static function modify($modify, $scheme = self::REL, array $config = [])
+    {
+        if (is_scalar($modify)) {
+            return static::set($modify, $config)->get($scheme);
+        }
+
+        if (!is_array($modify)) {
+            throw new UrlException('$modify must be array.');
+        }
+        $url = array_shift($modify);
+        return static::modifyInternal(static::set($url, $config), $modify)->get($scheme);
+    }
+
+    /**
+     * Modify current url.
+     * @param array $modify
+     * @param string $scheme
+     * @param array $config
+     * @return null|string
+     * @throws UrlException
+     */
+    public static function current(array $modify = null, $scheme = self::REL, array $config = [])
+    {
+        if (!isset($modify)) {
+            return static::set(null, $config)->get($scheme);
+        }
+
+        return static::modifyInternal(static::set(null, $config), $modify)->get($scheme);
     }
 
     /**
@@ -227,7 +256,7 @@ class Url implements UrlInterface, ObjectInterface
     /**
      * Returns formatted URL.
      *
-     * @param string  $scheme
+     * @param string $scheme
      * @param bool $selfHost to use current host (security).
      * @return null|string
      */
@@ -248,9 +277,9 @@ class Url implements UrlInterface, ObjectInterface
             $data['scheme'] = 'http';
         } elseif ($scheme == self::HTTPS && isset($data['host'])) {
             $data['scheme'] = 'https';
-        } elseif($scheme == self::ABS) {
+        } elseif ($scheme == self::ABS) {
         } else {
-            unset($data['scheme'] , $data['host'], $data['user'], $data['pass'], $data['port']);
+            unset($data['scheme'], $data['host'], $data['user'], $data['pass'], $data['port']);
         }
         return $this->strip === true ? strip_tags($this->build($data)) : $this->build($data);
     }
@@ -296,43 +325,53 @@ class Url implements UrlInterface, ObjectInterface
     }
 
     /**
-     * Set data of URL.
-     *
-     * @param $name
-     * @param $value
-     *
-     * ```php
-     * (new Url())->host = site.com
-     * ```
+     * Exists data by key.
+     * @param string $key key of data.
+     * @return bool
      */
-    public function __set($name, $value)
+    public function offsetExists($key)
     {
-        if ($name === 'query') {
-            $value = $this->_queryToArray($value);
-        }
-        $this->data[$name] = $value;
+        return isset($this->data[$key]);
     }
 
     /**
      * Returns URL-data.
-     * @param $name
+     * @param string $key key of data.
      * @return string|null
-     *
-     * ```php
-     * echo (new Url())->host; // result: site.com
-     * ```
      */
-    public function __get($name)
+    public function offsetGet($key)
     {
-        if (isset($this->data[$name])) {
-            return $this->data[$name];
+        if (isset($this->data[$key])) {
+            return $this->data[$key];
         }
 
         return null;
     }
 
     /**
-     * Returns data of url.
+     * Set data of URL.
+     * @param string $key key of data.
+     * @param $value
+     */
+    public function offsetSet($key, $value)
+    {
+        if ($key === 'query') {
+            $value = $this->_queryToArray($value);
+        }
+        $this->data[$key] = $value;
+    }
+
+    /**
+     * Remove data-URl by key.
+     * @param string $key key of data.
+     */
+    public function offsetUnset($key)
+    {
+        unset($this->data[$key]);
+    }
+
+    /**
+     * Returns list data of URL.
      * @return array
      */
     public function toArray()
@@ -353,7 +392,7 @@ class Url implements UrlInterface, ObjectInterface
      * @return string
      * @throws \Exception
      */
-    protected function current()
+    protected function currentInternal()
     {
         return $this->current ? Alias::getAlias($this->current) : $this->request->getAbsoluteUrl();
     }
@@ -393,6 +432,36 @@ class Url implements UrlInterface, ObjectInterface
         $url .= StringHelper::lconcat($data['fragment'], '#');
 
         return $url;
+    }
+
+    protected static function modifyInternal(Url $self, array $modify)
+    {
+        foreach ($modify as $key => $value) {
+            if ($key === '#') {
+                $self->addAnchor($value);
+                continue;
+            }
+
+            if (is_int($key)) {
+                if ($value === '!#') {
+                    $self->removeAnchor();
+                    continue;
+                }
+
+                if ($value === '!') {
+                    $self->removeAllArgs();
+                    continue;
+                }
+                if ($value[0] === '!') {
+                    $self->removeArgs([mb_substr($value, 1, mb_strlen($value, 'UTF-8'), 'UTF-8')]);
+                    continue;
+                }
+                continue;
+            }
+
+            $self->addArgs([$key => $value]);
+        }
+        return $self;
     }
 
     private function _queryToArray($query)
