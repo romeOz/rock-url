@@ -100,12 +100,12 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         if (!is_array($modify)) {
             throw new UrlException('$modify must be array.');
         }
-        if (is_int(key($modify)) && current($modify)[0] !== '!') {
+        $url = current($modify);
+        if (is_int(key($modify)) && !empty($url) && $url[0] !== '!') {
             $url = array_shift($modify);
         } else {
             $url = null;
         }
-
         return static::modifyInternal(static::set($url, $config), $modify)->get($scheme);
     }
 
@@ -431,6 +431,9 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
             }
 
             if (is_int($key)) {
+                if (empty($value)) {
+                    continue;
+                }
                 if ($value === '!#') {
                     $self->removeAnchor();
                     continue;

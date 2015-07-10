@@ -262,5 +262,9 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('/?page=2#name', Url::modify(['page' => 2, '#' => 'name']));
 
         $this->assertEquals('/', Url::modify(['#' => '']));
+
+        // empty
+        $this->assertEquals('http://site.com/?page=2', Url::modify(['', 'page' => 2], Url::ABS));
+        $this->assertEquals('http://site.com/?page=2', Url::modify([null, 'page' => 2], Url::ABS));
     }
 }
