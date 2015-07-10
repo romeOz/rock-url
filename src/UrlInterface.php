@@ -3,7 +3,7 @@
 namespace rock\url;
 
 
-interface UrlInterface 
+interface UrlInterface
 {
     const REL = 'rel';
     const HTTP = 'http';

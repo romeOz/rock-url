@@ -5,7 +5,6 @@ namespace rock\url;
 use rock\base\Alias;
 use rock\base\ObjectInterface;
 use rock\base\ObjectTrait;
-use rock\di\Container;
 use rock\helpers\Helper;
 use rock\helpers\Instance;
 use rock\helpers\StringHelper;
@@ -77,8 +76,8 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     public static function set($url = null, array $config = [])
     {
         if (class_exists('\rock\di\Container')) {
-            $config['class'] = self::className();
-            return Container::load($url, $config);
+            $config['class'] = static::className();
+            return \rock\di\Container::load($config, [$url]);
         }
         return new static($url, $config);
     }
