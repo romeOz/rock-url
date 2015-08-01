@@ -55,7 +55,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         $this->parentConstruct($config);
         $this->request = Instance::ensure($this->request, '\rock\request\Request');
 
-        if (!isset($url)) {
+        if (empty($url)) {
             $url = $this->currentInternal();
         }
         $this->data = array_merge(parse_url(trim($url)), $this->data);
