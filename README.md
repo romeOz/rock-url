@@ -8,19 +8,14 @@ URL builder library for PHP
 [![Coverage Status](https://coveralls.io/repos/romeOz/rock-url/badge.svg?branch=master)](https://coveralls.io/r/romeOz/rock-url?branch=master)
 [![License](https://poser.pugx.org/romeOz/rock-url/license.svg)](https://packagist.org/packages/romeOz/rock-url)
 
-[Rock URL on Packagist](https://packagist.org/packages/romeOz/rock-url)
-
-Features
--------------------
-
- * Module for [Rock Framework](https://github.com/romeOz/rock)
-
 Installation
 -------------------
 
 From the Command Line:
 
-```composer require romeoz/rock-url:*```
+```
+composer require romeoz/rock-url
+```
 
 In your composer.json:
 
@@ -68,6 +63,9 @@ Url::modify([foo' => 'test]);
 Requirements
 -------------------
  * **PHP 5.4+**
+ * For generating CSRF-token (security) required [Rock CSRF](https://github.com/romeOz/rock-csrf): `composer require romeoz/rock-csrf`
+
+>All unbolded dependencies is optional
 
 License
 -------------------

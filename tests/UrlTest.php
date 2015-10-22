@@ -3,6 +3,7 @@
 namespace rockunit;
 
 
+use rock\base\Alias;
 use rock\url\Url;
 
 /**
@@ -250,6 +251,11 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('/?page=2#name', Url::modify(['http://site.com/?foo=bar', '!foo', 'page' => 2, '#' => 'name']));
         $this->assertEquals('/?page=2', Url::modify(['http://site.com/?foo=bar#name', '!foo', 'page' => 2, '!#']));
         $this->assertEquals('/', Url::modify(['http://site.com/?foo=bar&baz=bar', '!']));
+
+        // replace placeholders
+        $this->assertEquals('http://api.site.com/items/7/', Url::modify(['http://{sub}.site.com/items/{id}/?foo=bar', '!foo', '+sub' => 'api', '+id' => 7], Url::ABS));
+        Alias::setAlias('foo', 'http://{sub}.site.com/items/{id}/', false);
+        $this->assertEquals('http://api.site.com/items/{id}/', Url::modify(['@foo', '!foo', '+sub' => 'api'], Url::ABS));
     }
 
     public function testCurrentModify()

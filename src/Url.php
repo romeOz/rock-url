@@ -5,13 +5,14 @@ namespace rock\url;
 use rock\base\Alias;
 use rock\base\ObjectInterface;
 use rock\base\ObjectTrait;
+use rock\helpers\ArrayHelper;
 use rock\helpers\Helper;
 use rock\helpers\Instance;
 use rock\helpers\StringHelper;
 use rock\request\Request;
 
 /**
- * Url manager.
+ * Url Builder.
  */
 class Url implements UrlInterface, ObjectInterface, \ArrayAccess
 {
@@ -32,17 +33,25 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
      */
     public $dummy = '#';
     /**
-     * Strip tags (security).
-     * @var bool
-     */
-    public $strip = true;
-    /**
      * Current URL.
      * @var string
      */
     public $current;
-    /** @var  Request */
+    /**
+     * Adding a CSRF-token (security).
+     * @var bool
+     */
+    public $csrf = false;
+    /**
+     * Request instance.
+     * @var  Request
+     */
     public $request = 'request';
+    /**
+     * CSRF instance.
+     * @var \rock\csrf\CSRF
+     */
+    public $csrfInstance = 'csrf';
 
     /**
      * Modify URL.
@@ -54,9 +63,12 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     {
         $this->parentConstruct($config);
         $this->request = Instance::ensure($this->request, '\rock\request\Request');
+        $this->csrfInstance = Instance::ensure($this->csrfInstance, '\rock\csrf\CSRF', [], false);
 
         if (empty($url)) {
             $url = $this->currentInternal();
+        } else {
+            $url = Alias::getAlias($url);
         }
         $this->data = array_merge(parse_url(trim($url)), $this->data);
         if (isset($this->data['query'])) {
@@ -70,16 +82,12 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
      * @param string|null $url URL for modify (default: NULL)
      * @param array $config the configuration. It can be either a string representing the class name
      *                             or an array representing the object configuration.
-     * @throws \rock\di\ContainerException
      * @return $this
      */
     public static function set($url = null, array $config = [])
     {
-        if (class_exists('\rock\di\Container')) {
-            $config['class'] = static::className();
-            return \rock\di\Container::load($config, [$url]);
-        }
-        return new static($url, $config);
+        $config['class'] = static::className();
+        return Instance::ensure($config, static::className(), [$url]);
     }
 
     /**
@@ -97,7 +105,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         }
 
         if (!is_array($modify)) {
-            throw new UrlException('$modify must be array.');
+            throw new UrlException('Argument "$modify" must be array.');
         }
         $url = current($modify);
         if (is_int(key($modify)) && !empty($url) && $url[0] !== '!') {
@@ -109,7 +117,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
-     * Set URL-args.
+     * Sets a URL-args.
      *
      * @param array $args array args
      * @return $this
@@ -122,7 +130,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
-     * Adding URL-arguments.
+     * Adds a URL-arguments.
      *
      * @param array $args arguments
      * @return $this
@@ -135,7 +143,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
-     * Removing URL-args.
+     * Removes a URL-args.
      *
      * @param array $args arguments
      * @return $this
@@ -155,7 +163,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
-     * Removing all URL-arguments.
+     * Removes all URL-arguments.
      * @return $this
      */
     public function removeAllArgs()
@@ -165,7 +173,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
-     * Adding anchor.
+     * Adds a anchor.
      *
      * @param string $anchor
      * @return $this
@@ -178,7 +186,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
-     * Removing anchor.
+     * Removes a anchor.
      *
      * @return $this
      */
@@ -218,13 +226,30 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     /**
      * Replacing path.
      *
-     * @param string $search
+     * @param string $value
      * @param string $replace
      * @return $this
      */
-    public function replacePath($search, $replace)
+    public function replacePath($value, $replace)
     {
-        $this->data['path'] = str_replace($search, $replace, $this->data['path']);
+        $this->data['path'] = str_replace($value, $replace, $this->data['path']);
+        return $this;
+    }
+
+    /**
+     * Replacing placeholders to URL-data.
+     * @param array $placeholders
+     * @return static
+     */
+    public function replace(array $placeholders = [])
+    {
+        if (empty($placeholders)) {
+            return $this;
+        }
+        $callback = function($value) use ($placeholders){
+            return StringHelper::replace($value, $placeholders, false);
+        };
+        $this->data = ArrayHelper::map($this->data, $callback, true);
         return $this;
     }
 
@@ -268,7 +293,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         } else {
             unset($data['scheme'], $data['host'], $data['user'], $data['pass'], $data['port']);
         }
-        return $this->strip === true ? strip_tags($this->build($data)) : $this->build($data);
+        return $this->build($data);
     }
 
     /**
@@ -386,43 +411,21 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
 
     protected function build(array $data)
     {
-        $url = StringHelper::rconcat($data['scheme'], '://');
-
-        if (isset($data['user']) && isset($data['pass'])) {
-            $url .= StringHelper::rconcat($data['user'], ':');
-            $url .= StringHelper::rconcat($data['pass'], '@');
-        }
-        if (!empty($data['host'])) {
-            $data['host'] = explode(':', $data['host']);
-            if (!isset($data['host'][1])) {
-                $data['host'][1] = null;
-            }
-            list($host, $port) = $data['host'];
-            $url .= $host;
-            if (isset($port)) {
-                $data['port'] = $port;
-            }
-        }
-        if (!empty($data['port'])) {
-            $url .= ":{$data['port']}";
-        }
-        if (isset($data['path'])) {
-            $url .= preg_replace(['/\/+(?!http:\/\/)/', '/\\\+/'], '/', $data['path']);
-        }
         if (!empty($data['query'])) {
-            if (is_string($data['query'])) {
-                $data['query'] = [$data['query']];
-            }
-            // @see http://php.net/manual/ru/function.http-build-query.php#111819
-            $url .= '?' . preg_replace('/%5B[0-9]+%5D/i', '%5B%5D', http_build_query($data['query']));
+            $data['query'] = preg_replace('/%5B[0-9]+%5D/i', '%5B%5D', http_build_query($data['query']));
+        } else {
+            unset($data['query']);
         }
-        $url .= StringHelper::lconcat($data['fragment'], '#');
 
-        return $url;
+        if (empty($data['fragment'])) {
+            unset($data['fragment']);
+        }
+        return http_build_url($data);
     }
 
     protected static function modifyInternal(Url $self, array $modify)
     {
+        $placeholders = [];
         foreach ($modify as $key => $value) {
             if ($key === '#') {
                 $self->addAnchor($value);
@@ -449,17 +452,29 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
                 continue;
             }
 
+            if ($key[0] === '+') {
+                $placeholders[mb_substr($key, 1, mb_strlen($key, 'UTF-8'), 'UTF-8')] = $value;
+                continue;
+            }
+
             $self->addArgs([$key => $value]);
         }
+        $self->replace($placeholders);
+
         return $self;
     }
 
     private function _queryToArray($query)
     {
-        if (!isset($query) || is_array($query)) {
+        if (!isset($query)) {
             return $query;
         }
-        parse_str($query, $query);
+        if (!is_array($query)) {
+            parse_str($query, $query);
+        }
+        if ($this->csrf && $this->csrfInstance instanceof \rock\csrf\CSRF) {
+            $query[$this->csrfInstance->csrfParam] = $this->csrfInstance->get();
+        }
         return $query;
     }
 }
