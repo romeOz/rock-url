@@ -4,6 +4,7 @@ namespace rockunit;
 
 
 use rock\base\Alias;
+use rock\csrf\CSRF;
 use rock\url\Url;
 
 /**
@@ -272,5 +273,11 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         // empty
         $this->assertEquals('http://site.com/?page=2', Url::modify(['', 'page' => 2], Url::ABS));
         $this->assertEquals('http://site.com/?page=2', Url::modify([null, 'page' => 2], Url::ABS));
+    }
+
+    public function testCSRF()
+    {
+        parse_str(Url::modify(['page' => 2], Url::REL, ['csrf' => true]), $result);
+        $this->assertNotEmpty($result[(new CSRF())->csrfParam]);
     }
 }

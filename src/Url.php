@@ -411,6 +411,12 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
 
     protected function build(array $data)
     {
+        if ($this->csrf && $this->csrfInstance instanceof \rock\csrf\CSRF) {
+            if (empty($data['query'])) {
+                $data['query'] = [];
+            }
+            $data['query'][$this->csrfInstance->csrfParam] = $this->csrfInstance->get();
+        }
         if (!empty($data['query'])) {
             $data['query'] = preg_replace('/%5B[0-9]+%5D/i', '%5B%5D', http_build_query($data['query']));
         } else {
@@ -471,9 +477,6 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         }
         if (!is_array($query)) {
             parse_str($query, $query);
-        }
-        if ($this->csrf && $this->csrfInstance instanceof \rock\csrf\CSRF) {
-            $query[$this->csrfInstance->csrfParam] = $this->csrfInstance->get();
         }
         return $query;
     }
