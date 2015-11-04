@@ -244,8 +244,9 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     public function testModify()
     {
         $this->assertEquals('/', Url::modify('http://site.com/'));
-        $this->assertEquals('http://site.com/', Url::modify('http://site.com/', Url::ABS));
-        $this->assertEquals('http://site.com/?page=2', Url::modify(['http://site.com/', 'page' => 2], Url::ABS));
+        $this->assertEquals('http://site.com/', Url::modify(['http://site.com/', '@scheme' => Url::ABS]));
+        $this->assertEquals('http://site.com/', Url::modify(['http://site.com/', '@scheme' => Url::ABS]));
+        $this->assertEquals('http://site.com/?page=2', Url::modify(['http://site.com/', '@scheme' => Url::ABS, 'page' => 2]));
         $this->assertEquals('/?page=2', Url::modify(['http://site.com/', 'page' => 2]));
 
         $this->assertEquals('/', Url::modify(['http://site.com/?foo=bar', '!foo']));
@@ -254,30 +255,35 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('/', Url::modify(['http://site.com/?foo=bar&baz=bar', '!']));
 
         // replace placeholders
-        $this->assertEquals('http://api.site.com/items/7/', Url::modify(['http://{sub}.site.com/items/{id}/?foo=bar', '!foo', '+sub' => 'api', '+id' => 7], Url::ABS));
+        $this->assertEquals('http://api.site.com/items/7/', Url::modify(['http://{sub}.site.com/items/{id}/?foo=bar', '!foo', '+sub' => 'api', '+id' => 7, '@scheme' => Url::ABS]));
         Alias::setAlias('foo', 'http://{sub}.site.com/items/{id}/', false);
-        $this->assertEquals('http://api.site.com/items/{id}/', Url::modify(['@foo', '!foo', '+sub' => 'api'], Url::ABS));
+        $this->assertEquals('http://api.site.com/items/{id}/', Url::modify(['@foo', '!foo', '+sub' => 'api', '@scheme' => Url::ABS]));
     }
 
     public function testCurrentModify()
     {
-        $this->assertEquals('http://site.com/', Url::modify(null, Url::ABS));
+        $this->assertEquals('http://site.com/', Url::modify(['@scheme' => Url::ABS]));
+        $this->assertEquals('/', Url::modify(['@scheme' => Url::REL]));
         $this->assertEquals('/', Url::modify());
 
         $this->assertEquals('/?page=2', Url::modify(['page' => 2]));
-        $this->assertEquals('http://site.com/?page=2', Url::modify(['page' => 2], Url::ABS));
+        $this->assertEquals('http://site.com/?page=2', Url::modify(['@scheme' => Url::ABS, 'page' => 2]));
+        $this->assertEquals('/?page=2', Url::modify(['@scheme' => Url::REL, 'page' => 2]));
         $this->assertEquals('/?page=2#name', Url::modify(['page' => 2, '#' => 'name']));
 
         $this->assertEquals('/', Url::modify(['#' => '']));
 
         // empty
-        $this->assertEquals('http://site.com/?page=2', Url::modify(['', 'page' => 2], Url::ABS));
-        $this->assertEquals('http://site.com/?page=2', Url::modify([null, 'page' => 2], Url::ABS));
+        $this->assertEquals('http://site.com/?page=2', Url::modify(['', 'page' => 2, '@scheme' => Url::ABS]));
+        $this->assertEquals('http://site.com/?page=2', Url::modify([null, '@scheme' => Url::ABS, 'page' => 2]));
     }
 
     public function testCSRF()
     {
-        parse_str(Url::modify(['page' => 2], Url::REL, ['csrf' => true]), $result);
+        parse_str(Url::modify(['page' => 2, '@scheme' => Url::REL], ['csrf' => true]), $result);
+        $this->assertNotEmpty($result[(new CSRF())->csrfParam]);
+
+        parse_str(Url::modify(['page' => 2, '@csrf' => true]), $result);
         $this->assertNotEmpty($result[(new CSRF())->csrfParam]);
     }
 }

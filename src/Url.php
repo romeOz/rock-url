@@ -93,15 +93,14 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     /**
      * Modify url.
      * @param string|array $modify
-     * @param string $scheme
      * @param array $config
      * @return null|string
      * @throws UrlException
      */
-    public static function modify($modify = null, $scheme = self::REL, array $config = [])
+    public static function modify($modify = null, array $config = [])
     {
         if (!isset($modify) || is_scalar($modify)) {
-            return static::set($modify, $config)->get($scheme);
+            return static::set($modify, $config)->get();
         }
 
         if (!is_array($modify)) {
@@ -112,6 +111,15 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
             $url = array_shift($modify);
         } else {
             $url = null;
+        }
+        $scheme = self::REL;
+        if (isset($modify['@scheme'])) {
+            $scheme = $modify['@scheme'];
+            unset($modify['@scheme']);
+        }
+        if (isset($modify['@csrf'])) {
+            $config['csrf'] = $modify['@csrf'];
+            unset($modify['@csrf']);
         }
         return static::modifyInternal(static::set($url, $config), $modify)->get($scheme);
     }
