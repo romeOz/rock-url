@@ -5,6 +5,7 @@ namespace rockunit;
 
 use rock\base\Alias;
 use rock\csrf\CSRF;
+use rock\request\Request;
 use rock\url\Url;
 
 /**
@@ -278,6 +279,18 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('http://site.com/?page=2', Url::modify([null, '@scheme' => Url::ABS, 'page' => 2]));
     }
 
+    public function testRemoveArgs()
+    {
+        $request = new Request(['url' => '/?foo=test']);
+
+        $this->assertSame('http://site.com/?foo=test', Url::modify(['@scheme' => Url::ABS], ['request' => $request]));
+        $this->assertSame('http://site.com/', Url::modify(['!', '@scheme' => Url::ABS], ['request' => $request]));
+        $this->assertSame('http://site.com/', Url::modify(['@scheme' => Url::ABS, '!'], ['request' => $request]));
+
+        $this->assertSame('/?page=2', Url::modify(['http://site.com/?page=2', '@scheme' => Url::REL]));
+        $this->assertSame('http://site.com/', Url::modify(['http://site.com/?page=2', '@scheme' => Url::ABS, '!']));
+    }
+
     public function testCSRF()
     {
         parse_str(Url::modify(['page' => 2, '@scheme' => Url::REL], ['csrf' => true]), $result);
@@ -286,4 +299,6 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         parse_str(Url::modify(['page' => 2, '@csrf' => true]), $result);
         $this->assertNotEmpty($result[(new CSRF())->csrfParam]);
     }
+
+
 }
