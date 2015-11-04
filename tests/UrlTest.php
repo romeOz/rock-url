@@ -245,6 +245,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     public function testModify()
     {
         $this->assertEquals('/', Url::modify('http://site.com/'));
+        $this->assertEquals('/', Url::modify(['http://site.com/']));
         $this->assertEquals('http://site.com/', Url::modify(['http://site.com/', '@scheme' => Url::ABS]));
         $this->assertEquals('http://site.com/', Url::modify(['http://site.com/', '@scheme' => Url::ABS]));
         $this->assertEquals('http://site.com/?page=2', Url::modify(['http://site.com/', '@scheme' => Url::ABS, 'page' => 2]));
@@ -259,6 +260,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('http://api.site.com/items/7/', Url::modify(['http://{sub}.site.com/items/{id}/?foo=bar', '!foo', '+sub' => 'api', '+id' => 7, '@scheme' => Url::ABS]));
         Alias::setAlias('foo', 'http://{sub}.site.com/items/{id}/', false);
         $this->assertEquals('http://api.site.com/items/{id}/', Url::modify(['@foo', '!foo', '+sub' => 'api', '@scheme' => Url::ABS]));
+        $this->assertEquals('/items/{id}/', Url::modify(['@foo']));
     }
 
     public function testCurrentModify()
