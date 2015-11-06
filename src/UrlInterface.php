@@ -9,4 +9,7 @@ interface UrlInterface
     const HTTP = 'http';
     const HTTPS = 'https';
     const ABS = 'abs';
+    const SHORT_ABS = 'short_abs';
+    const FTP = 'ftp';
+    const FTPS = 'ftps';
 } 

@@ -22,16 +22,24 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
 
     /**
      * List URL-data.
-     *
      * @var array
      */
     protected $data = [];
     /**
-     * Dummy by URL. If URL is empty.
-     *
+     * Use dummy, when URL is empty.
      * @var string
      */
     public $dummy = '#';
+    /**
+     * Enable protect mode.
+     * @var bool
+     */
+    public $protect = false;
+    /**
+     * Link.
+     * @var string
+     */
+    public $protectLink;
     /**
      * Current URL.
      * @var string
@@ -52,6 +60,11 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
      * @var \rock\csrf\CSRF
      */
     public $csrfInstance = 'csrf';
+    /**
+     * Allowed domains.
+     * @var string[]
+     */
+    protected $_allowedDomains = [];
 
     /**
      * Modify URL.
@@ -64,7 +77,6 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         $this->parentConstruct($config);
         $this->request = Instance::ensure($this->request, '\rock\request\Request');
         $this->csrfInstance = Instance::ensure($this->csrfInstance, '\rock\csrf\CSRF', [], false);
-
         if (empty($url)) {
             $url = $this->currentInternal();
         } else {
@@ -115,118 +127,153 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         $scheme = self::REL;
         if (isset($modify['@scheme'])) {
             $scheme = $modify['@scheme'];
-            unset($modify['@scheme']);
-        }
-        if (isset($modify['@csrf'])) {
-            $config['csrf'] = $modify['@csrf'];
-            unset($modify['@csrf']);
+            if ($modify['@scheme'] == self::ABS || $modify['@scheme'] == self::SHORT_ABS) {
+                unset($modify['@scheme']);
+            }
         }
         return static::modifyInternal(static::set($url, $config), $modify)->get($scheme);
     }
 
     /**
-     * Sets a URL-args.
-     *
-     * @param array $args array args
+     * Sets a scheme.
+     * @param string $scheme
      * @return $this
      */
-    public function setArgs(array $args)
+    public function setScheme($scheme)
     {
-        $this->data['query'] = $args;
-
+        $this->data['scheme'] = $scheme;
         return $this;
     }
 
     /**
-     * Adds a URL-arguments.
-     *
-     * @param array $args arguments
+     * Returns a scheme.
+     * @return string|null
+     */
+    public function getScheme()
+    {
+        return isset($this->data['scheme']) ? $this->data['scheme'] : null;
+    }
+
+    /**
+     * Sets a host.
+     * @param string $host
      * @return $this
      */
-    public function addArgs(array $args)
+    public function setHost($host)
     {
-        $this->data['query'] = array_merge(Helper::getValue($this->data['query'], []), $args);
-        $this->data['query'] = array_filter($this->data['query']);
+        $this->data['host'] = $host;
         return $this;
     }
 
     /**
-     * Removes a URL-args.
-     *
-     * @param array $args arguments
+     * Returns a host.
+     * @return string|null
+     */
+    public function getHost()
+    {
+        return isset($this->data['host']) ? $this->data['host'] : null;
+    }
+
+    /**
+     * Sets a port.
+     * @param int $port
      * @return $this
      */
-    public function removeArgs(array $args)
+    public function setPort($port)
     {
-        if (empty($this->data['query'])) {
-            return $this;
-        }
-
-        $this->data['query'] = array_diff_key(
-            $this->data['query'],
-            array_flip($args)
-        );
-
+        $this->data['port'] = $port;
         return $this;
     }
 
     /**
-     * Removes all URL-arguments.
+     * Returns a port.
+     * @return int|null
+     */
+    public function getPort()
+    {
+        return isset($this->data['port']) ? $this->data['port'] : null;
+    }
+
+    /**
+     * Sets a user.
+     * @param string $user
      * @return $this
      */
-    public function removeAllArgs()
+    public function setUser($user)
     {
-        $this->data['query'] = null;
+        $this->data['user'] = $user;
         return $this;
     }
 
     /**
-     * Adds a anchor.
-     *
-     * @param string $anchor
+     * Returns a user.
+     * @return string|null
+     */
+    public function getUser()
+    {
+        return isset($this->data['user']) ? $this->data['user'] : null;
+    }
+
+    /**
+     * Sets a pass.
+     * @param string $pass
      * @return $this
      */
-    public function addAnchor($anchor)
+    public function setPass($pass)
     {
-        $this->data['fragment'] = $anchor;
-
+        $this->data['pass'] = $pass;
         return $this;
     }
 
     /**
-     * Removes a anchor.
-     *
+     * Returns a pass.
+     * @return string|null
+     */
+    public function getPass()
+    {
+        return isset($this->data['pass']) ? $this->data['pass'] : null;
+    }
+
+    /**
+     * Sets a path.
+     * @param string $path
      * @return $this
      */
-    public function removeAnchor()
+    public function setPath($path)
     {
-        $this->data['fragment'] = null;
-
+        $this->data['path'] = $path;
         return $this;
     }
 
     /**
-     * Adding string to begin of URL-path.
-     *
+     * Returns a path.
+     * @return string|null
+     */
+    public function getPath()
+    {
+        return isset($this->data['path']) ? $this->data['path'] : null;
+    }
+
+    /**
+     * Adding prefix to path.
      * @param string $value
      * @return $this
      */
-    public function addBeginPath($value)
+    public function setPrefixPath($value)
     {
-        $this->data['path'] = $value . $this->data['path'];
+        $this->data['path'] = preg_replace('~/+~', '/', $value . $this->data['path']);
 
         return $this;
     }
 
     /**
-     * Adding string to end of URL-path.
-     *
+     * Adding postfix to path.
      * @param string $value
      * @return $this
      */
-    public function addEndPath($value)
+    public function setPostfixPath($value)
     {
-        $this->data['path'] .= $value;
+        $this->data['path'] = preg_replace('~/+~', '/', $this->data['path'] . $value);
 
         return $this;
     }
@@ -245,6 +292,122 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
+     * Sets a query.
+     * @param string $query query.
+     * @return $this
+     */
+    public function setQuery($query)
+    {
+        if (!empty($query)) {
+            $this->data['query'] = $this->_queryToArray($query);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Returns a query.
+     * @return string
+     */
+    public function getQuery()
+    {
+        if (!isset($this->data['query'])) {
+            return null;
+        }
+
+        return $this->_queryToString($this->data['query']);
+    }
+
+    /**
+     * Sets a query params.
+     * @param array $queryParams list arguments.
+     * @return $this
+     */
+    public function setQueryParams(array $queryParams)
+    {
+        $this->data['query'] = $queryParams;
+
+        return $this;
+    }
+
+    /**
+     * Adds a query params.
+     * @param array $queryParams list arguments.
+     * @return $this
+     */
+    public function addQueryParams(array $queryParams)
+    {
+        $this->data['query'] = array_merge(Helper::getValue($this->data['query'], []), $queryParams);
+        $this->data['query'] = array_filter($this->data['query']);
+        return $this;
+    }
+
+    /**
+     * Returns a query params.
+     * @return array|null
+     */
+    public function getQueryParams()
+    {
+        if (!isset($this->data['query'])) {
+            return null;
+        }
+
+        return $this->_queryToArray($this->data['query']);
+    }
+
+    /**
+     * Removes a query params.
+     * @param array $queryParams arguments
+     * @return $this
+     */
+    public function removeQueryParams(array $queryParams)
+    {
+        if (empty($this->data['query'])) {
+            return $this;
+        }
+
+        $this->data['query'] = array_diff_key(
+            $this->data['query'],
+            array_flip($queryParams)
+        );
+
+        return $this;
+    }
+
+    /**
+     * Removes query.
+     * @return $this
+     */
+    public function removeQuery()
+    {
+        $this->data['query'] = null;
+        return $this;
+    }
+
+    /**
+     * Sets a fragment/anchor.
+     * @param string $anchor
+     * @return $this
+     */
+    public function setFragment($anchor)
+    {
+        $this->data['fragment'] = $anchor;
+
+        return $this;
+    }
+
+    /**
+     * Removes a fragment/anchor.
+     * @return $this
+     */
+    public function removeFragment()
+    {
+        $this->data['fragment'] = null;
+
+        return $this;
+    }
+
+    /**
      * Replacing placeholders to URL-data.
      * @param array $placeholders
      * @return static
@@ -254,7 +417,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         if (empty($placeholders)) {
             return $this;
         }
-        $callback = function($value) use ($placeholders){
+        $callback = function ($value) use ($placeholders) {
             return StringHelper::replace($value, $placeholders, false);
         };
         $this->data = ArrayHelper::map($this->data, $callback, true);
@@ -263,7 +426,6 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
 
     /**
      * Custom formatting.
-     *
      * @param callable $callback
      * @return $this
      */
@@ -275,73 +437,58 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
 
     /**
      * Returns formatted URL.
-     *
      * @param string $scheme
-     * @param bool $selfHost to use current host (security).
      * @return null|string
      */
-    public function get($scheme = self::REL, $selfHost = false)
+    public function get($scheme = self::REL)
     {
         $data = $this->data;
-        if ($selfHost == true) {
-            $data['scheme'] = $this->request->getScheme();
-            $data['host'] = $this->request->getHost();
-        }
-
-        if (!isset($data['host'])) {
-            $data['scheme'] = $this->request->getScheme();
-            $data['host'] = $this->request->getHost();
-        }
-
-        if ($scheme == self::HTTP && isset($data['host'])) {
-            $data['scheme'] = 'http';
-        } elseif ($scheme == self::HTTPS && isset($data['host'])) {
-            $data['scheme'] = 'https';
-        } elseif ($scheme == self::ABS) {
-        } else {
+        if ($scheme == self::REL) {
             unset($data['scheme'], $data['host'], $data['user'], $data['pass'], $data['port']);
+            return $this->build($data);
         }
-        return $this->build($data);
+        if (!isset($data['host'])) {
+            $data['host'] = $this->request->getHost();
+        }
+        if (!isset($data['scheme'])) {
+            $scheme = self::SHORT_ABS;
+        }
+
+        if ($scheme == self::SHORT_ABS) {
+            unset($data['scheme']);
+            $url = $this->build($data, '//');
+        } else {
+            $url = $this->build($data);
+        }
+
+        return $this->asProtect($url, $data['host']);
     }
 
     /**
-     * Returns absolute URL: `http://site.com`
-     * @param bool $selfHost
+     * Returns absolute URL: `/`.
      * @return null|string
      */
-    public function getAbsolute($selfHost = false)
+    public function getRelative()
     {
-        return $this->get(self::ABS, $selfHost);
+        return $this->get(self::REL);
     }
 
     /**
-     * Returns absolute URL: `/`
-     * @param bool $selfHost
+     * Returns absolute URL: `http://site.com`.
      * @return null|string
      */
-    public function getRelative($selfHost = false)
+    public function getAbsolute()
     {
-        return $this->get(self::REL, $selfHost);
+        return $this->get(self::ABS);
     }
 
     /**
-     * Returns http URL: `http://site.com`
-     * @param bool $selfHost
+     * Returns absolute URL: `//site.com`.
      * @return null|string
      */
-    public function getHttp($selfHost = false)
+    public function getShortAbsolute()
     {
-        return $this->get(self::HTTP, $selfHost);
-    }
-
-    /**
-     * Returns https URL: `https://site.com`
-     * @param bool $selfHost
-     * @return null|string
-     */
-    public function getHttps($selfHost = false)
-    {
-        return $this->get(self::HTTPS, $selfHost);
+        return $this->get(self::SHORT_ABS);
     }
 
     /**
@@ -369,20 +516,20 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
-     * Set data of URL.
+     * Sets a URL-data by key.
      * @param string $key key of data.
      * @param $value
      */
     public function offsetSet($key, $value)
     {
-        if ($key === 'query') {
+        if ($key === 'query' && isset($value)) {
             $value = $this->_queryToArray($value);
         }
         $this->data[$key] = $value;
     }
 
     /**
-     * Remove data-URl by key.
+     * Removes a URL-data by key.
      * @param string $key key of data.
      */
     public function offsetUnset($key)
@@ -391,7 +538,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
     }
 
     /**
-     * Returns list data of URL.
+     * Returns a list data of URL.
      * @return array
      */
     public function toArray()
@@ -407,6 +554,14 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         return $this->getAbsolute();
     }
 
+    public function setAllowedDomains(array $domains)
+    {
+        foreach ($domains as &$domain) {
+            $domain = Alias::getAlias($domain);
+        }
+        $this->_allowedDomains = $domains;
+    }
+
     /**
      * Returns current url.
      * @return string
@@ -417,7 +572,7 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         return $this->current ? Alias::getAlias($this->current) : $this->request->getAbsoluteUrl();
     }
 
-    protected function build(array $data)
+    protected function build(array $data, $prefix = null)
     {
         if ($this->csrf && $this->csrfInstance instanceof \rock\csrf\CSRF) {
             if (empty($data['query'])) {
@@ -434,35 +589,40 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         if (empty($data['fragment'])) {
             unset($data['fragment']);
         }
-        return http_build_url($data);
+        return $prefix . http_build_url($data);
     }
 
     protected static function modifyInternal(Url $self, array $modify)
     {
         $placeholders = [];
         foreach ($modify as $key => $value) {
-            if ($key === '#') {
-                $self->addAnchor($value);
-                continue;
-            }
-
             if (is_int($key)) {
                 if (empty($value)) {
                     continue;
                 }
                 if ($value === '!#') {
-                    $self->removeAnchor();
+                    $self->removeFragment();
                     continue;
                 }
 
                 if ($value === '!') {
-                    $self->removeAllArgs();
+                    $self->removeQuery();
                     continue;
                 }
                 if ($value[0] === '!') {
-                    $self->removeArgs([mb_substr($value, 1, mb_strlen($value, 'UTF-8'), 'UTF-8')]);
+                    $self->removeQueryParams([mb_substr($value, 1, mb_strlen($value, 'UTF-8'), 'UTF-8')]);
                     continue;
                 }
+                continue;
+            }
+
+            if ($key === '#') {
+                $self->setFragment($value);
+                continue;
+            }
+
+            if ($key[0] === '@') {
+                $self->{substr($key, 1)} = $value;
                 continue;
             }
 
@@ -471,21 +631,43 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
                 continue;
             }
 
-            $self->addArgs([$key => $value]);
+            $self->addQueryParams([$key => $value]);
         }
         $self->replace($placeholders);
 
         return $self;
     }
 
+    protected function asProtect($url, $host)
+    {
+        if (empty($this->_allowedDomains)) {
+            if ($_host = $this->request->getHost()) {
+                $this->_allowedDomains = [$_host];
+            }
+        }
+        if ($this->protect && isset($this->protectLink) && !in_array($host, $this->_allowedDomains, true)) {
+            $this->protectLink = (array)$this->protectLink;
+            if (!isset($this->protectLink['@scheme'])) {
+                $this->protectLink['@scheme'] = self::ABS;
+            }
+            return static::modify($this->protectLink) . "?r={$url}";
+        }
+        return $url;
+    }
+
     private function _queryToArray($query)
     {
-        if (!isset($query)) {
-            return $query;
-        }
         if (!is_array($query)) {
             parse_str($query, $query);
         }
         return $query;
+    }
+
+    private function _queryToString($query)
+    {
+        if (is_array($query)) {
+            $query = http_build_query($query);
+        }
+        return preg_replace('/%5B[0-9]+%5D/i', '%5B%5D', $query);
     }
 }

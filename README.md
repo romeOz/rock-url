@@ -39,10 +39,10 @@ use rock\url\Url;
 (new Url)->getRelative(); // output: /foo/?page=1
 
 // modify URL
-Url::set('https://site.com/?page=2#name')->removeAnchor()->getRelative(); 
+Url::set('https://site.com/?page=2#name')->removeFragment()->getRelative(); 
 //output: /?page=2
 
-Url::set('https://site.com/?page=2#name')->removeArgs(['page'])->getAbsolute(); 
+Url::set('https://site.com/?page=2#name')->removeQueryParams(['page'])->getAbsolute(); 
 //output: https://site.com/#name
 ```
 
@@ -50,14 +50,14 @@ Url::set('https://site.com/?page=2#name')->removeArgs(['page'])->getAbsolute();
 
 ```php
 Url::modify(['https://site.com/', 'foo' => 'test', '#' => 'name']);
-//output: https://site.com/?foo=test#name
+//output: /?foo=test#name
 
-Url::modify(['https://site.com/?foo=test#name', '!foo', '!#']);
+Url::modify(['https://site.com/?foo=test#name', '!foo', '!#', '@scheme' => Url::ABS]);
 //output: https://site.com/
 
 // modify current url
 Url::modify([foo' => 'test]);
-//output: https://site.com/?foo=test
+//output: /?foo=test
 ```
 
 Requirements
