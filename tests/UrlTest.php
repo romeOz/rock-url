@@ -7,6 +7,7 @@ use rock\base\Alias;
 use rock\csrf\CSRF;
 use rock\request\Request;
 use rock\url\Url;
+use rock\url\UrlException;
 
 /**
  * @group base
@@ -348,6 +349,15 @@ class UrlTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame('/?page=2', Url::modify(['http://site.com/?page=2', '@scheme' => Url::REL]));
         $this->assertSame('http://site.com/', Url::modify(['http://site.com/?page=2', '@scheme' => Url::ABS, '!']));
+    }
+
+    /**
+     * @expectedException \rock\url\UrlException
+     */
+    public function testWrongFormatURL()
+    {
+        $url = new Url('http://');
+        $url->getAbsolute();
     }
 
     public function testCSRF()

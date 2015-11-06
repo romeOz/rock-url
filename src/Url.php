@@ -71,6 +71,9 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
      *
      * @param string|null $url URL for formatting. If URL as `NULL`, then use current (self) URL.
      * @param array $config
+     * @throws UrlException
+     * @throws \Exception
+     * @throws \rock\helpers\InstanceException
      */
     public function __construct($url = null, $config = [])
     {
@@ -82,7 +85,10 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         } else {
             $url = Alias::getAlias($url);
         }
-        $this->data = array_merge(parse_url(trim($url)), $this->data);
+        if (($url = parse_url(trim($url))) === false) {
+            throw new UrlException('Wrong format URL.');
+        }
+        $this->data = array_merge($url, $this->data);
         if (isset($this->data['query'])) {
             $this->data['query'] = $this->_queryToArray($this->data['query']);
         }
