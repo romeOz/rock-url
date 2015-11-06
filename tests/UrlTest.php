@@ -13,9 +13,8 @@ use rock\url\Url;
  */
 class UrlTest extends \PHPUnit_Framework_TestCase
 {
-    public static function setUpBeforeClass()
+    public function setUp()
     {
-        parent::setUpBeforeClass();
         $_SERVER['REQUEST_URI'] = '/';
         $_SERVER['SERVER_NAME'] = $_SERVER['HTTP_HOST'] = 'site.com';
     }
@@ -165,8 +164,10 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     {
         $url = new Url('http://site.com:8080/?page=2#name');
         $this->assertSame('/?page=2#name', $url->getRelative());
+        sleep(2);
         $url = new Url('/?page=2#name');
         $this->assertSame('//site.com/?page=2#name', $url->getAbsolute());
+        sleep(2);
         $url = new Url('//site.com:8080/?page=2#name');
         $this->assertSame('//site.com:8080/?page=2#name', $url->getShortAbsolute());
 
