@@ -82,7 +82,6 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
         } else {
             $url = Alias::getAlias($url);
         }
-        var_dump(parse_url(trim($url)));
         $this->data = array_merge(parse_url(trim($url)), $this->data);
         if (isset($this->data['query'])) {
             $this->data['query'] = $this->_queryToArray($this->data['query']);
