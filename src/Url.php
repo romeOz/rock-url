@@ -3,6 +3,7 @@
 namespace rock\url;
 
 use rock\base\Alias;
+use rock\base\BaseException;
 use rock\base\ObjectInterface;
 use rock\base\ObjectTrait;
 use rock\helpers\ArrayHelper;
@@ -26,11 +27,6 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
      */
     protected $data = [];
     /**
-     * Use dummy, when URL is empty.
-     * @var string
-     */
-    public $dummy = '#';
-    /**
      * Enable protect mode.
      * @var bool
      */
@@ -50,6 +46,11 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
      * @var bool
      */
     public $csrf = false;
+    /**
+     * Throw exception when wrong format URL.
+     * @var bool
+     */
+    public $throwException = true;
     /**
      * Request instance.
      * @var  Request
@@ -86,7 +87,16 @@ class Url implements UrlInterface, ObjectInterface, \ArrayAccess
             $url = Alias::getAlias($url);
         }
         if (($url = parse_url(trim($url))) === false) {
-            throw new UrlException('Wrong format URL.');
+            $exception = new UrlException('Wrong format URL.');
+            if ($this->throwException) {
+                throw $exception;
+            } else {
+                if (class_exists('\rock\log\Log')) {
+                    \rock\log\Log::warn(BaseException::convertExceptionToString($exception));
+                }
+                $url = parse_url(trim($this->currentInternal()));
+                $url['fragment'] = '#';
+            }
         }
         $this->data = array_merge($url, $this->data);
         if (isset($this->data['query'])) {
