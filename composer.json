@@ -20,7 +20,8 @@
         "romeoz/rock-request" : "0.14.*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^4.7.0"
+        "phpunit/phpunit": "^4.7.0",
+        "romeoz/rock-csrf" : "0.12.*"
     },
     "suggest": {
         "romeoz/rock-csrf": "required for generating CSRF-token (security)"
